@@ -1,10 +1,9 @@
 package com.dmdev.util;
 
-import lombok.SneakyThrows;
-import lombok.experimental.UtilityClass;
-
 import java.sql.Connection;
 import java.sql.DriverManager;
+import lombok.SneakyThrows;
+import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class ConnectionManager {
@@ -31,3 +30,4 @@ public class ConnectionManager {
                 PropertiesUtil.get(PASSWORD_KEY));
     }
 }
+
