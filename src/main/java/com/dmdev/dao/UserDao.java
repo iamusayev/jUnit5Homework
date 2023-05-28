@@ -1,12 +1,13 @@
 package com.dmdev.dao;
 
+import static java.sql.Statement.RETURN_GENERATED_KEYS;
+import static lombok.AccessLevel.PRIVATE;
+
 import com.dmdev.entity.Gender;
 import com.dmdev.entity.Role;
 import com.dmdev.entity.User;
 import com.dmdev.util.ConnectionManager;
-import lombok.NoArgsConstructor;
-import lombok.SneakyThrows;
-
+import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,41 +15,21 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
-import static java.sql.Statement.RETURN_GENERATED_KEYS;
-import static lombok.AccessLevel.PRIVATE;
+import lombok.NoArgsConstructor;
+import lombok.SneakyThrows;
 
 @NoArgsConstructor(access = PRIVATE)
 public class UserDao implements Dao<Integer, User> {
 
     private static final UserDao INSTANCE = new UserDao();
 
-    private static final String GET_ALL_SQL = """
-            SELECT
-                id,
-                name,
-                birthday,
-                email,
-                password,
-                role,
-                gender
-            FROM users
-            """;
+    private static final String GET_ALL_SQL = "SELECT    id,name,birthday,email,password,role,gender FROM users";
     private static final String GET_BY_ID_SQL = GET_ALL_SQL + " WHERE id = ?";
     private static final String GET_BY_EMAIL_AND_PASSWORD_SQL = GET_ALL_SQL + " WHERE email = ? AND password = ?";
-    private static final String SAVE_SQL =
-            "INSERT INTO users (name, birthday, email, password, role, gender) VALUES (?, ?, ?, ?, ?, ?)";
+    private static final String SAVE_SQL = "INSERT INTO users (name, birthday, email, password, role, gender) VALUES (?, ?, ?, ?, ?, ?)";
     private static final String DELETE_BY_ID_SQL = "DELETE FROM users WHERE id = ?";
-    private static final String UPDATE_BY_ID_SQL = """
-            UPDATE users
-            SET name = ?,
-                birthday = ?,
-                email = ?,
-                password = ?,
-                role = ?,
-                gender = ?
-            WHERE id = ?
-            """;
+    private static final String UPDATE_BY_ID_SQL =
+            "    UPDATE users SET name = ?, birthday = ?, email = ?, password = ?, role = ?, gender = ? WHERE id = ?";
 
     public static UserDao getInstance() {
         return INSTANCE;
@@ -57,9 +38,9 @@ public class UserDao implements Dao<Integer, User> {
     @Override
     @SneakyThrows
     public List<User> findAll() {
-        try (var connection = ConnectionManager.get();
-             var preparedStatement = connection.prepareStatement(GET_ALL_SQL)) {
-            var resultSet = preparedStatement.executeQuery();
+        try (Connection connection = ConnectionManager.get();
+             PreparedStatement preparedStatement = connection.prepareStatement(GET_ALL_SQL)) {
+            ResultSet resultSet = preparedStatement.executeQuery();
             List<User> users = new ArrayList<>();
             while (resultSet.next()) {
                 users.add(buildEntity(resultSet));
@@ -72,11 +53,11 @@ public class UserDao implements Dao<Integer, User> {
     @Override
     @SneakyThrows
     public Optional<User> findById(Integer id) {
-        try (var connection = ConnectionManager.get();
-             var preparedStatement = connection.prepareStatement(GET_BY_ID_SQL)) {
+        try (Connection connection = ConnectionManager.get();
+             PreparedStatement preparedStatement = connection.prepareStatement(GET_BY_ID_SQL)) {
             preparedStatement.setObject(1, id);
 
-            var resultSet = preparedStatement.executeQuery();
+            ResultSet resultSet = preparedStatement.executeQuery();
             return resultSet.next()
                     ? Optional.of(buildEntity(resultSet))
                     : Optional.empty();
@@ -86,13 +67,13 @@ public class UserDao implements Dao<Integer, User> {
     @Override
     @SneakyThrows
     public User save(User entity) {
-        try (var connection = ConnectionManager.get();
-             var preparedStatement = connection.prepareStatement(SAVE_SQL, RETURN_GENERATED_KEYS)) {
+        try (Connection connection = ConnectionManager.get();
+             PreparedStatement preparedStatement = connection.prepareStatement(SAVE_SQL, RETURN_GENERATED_KEYS)) {
             prepareStatementToUpsert(preparedStatement, entity);
 
             preparedStatement.executeUpdate();
 
-            var generatedKeys = preparedStatement.getGeneratedKeys();
+            ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
             generatedKeys.next();
             entity.setId(generatedKeys.getObject("id", Integer.class));
 
@@ -102,12 +83,12 @@ public class UserDao implements Dao<Integer, User> {
 
     @SneakyThrows
     public Optional<User> findByEmailAndPassword(String email, String password) {
-        try (var connection = ConnectionManager.get();
-             var preparedStatement = connection.prepareStatement(GET_BY_EMAIL_AND_PASSWORD_SQL)) {
+        try (Connection connection = ConnectionManager.get();
+             PreparedStatement preparedStatement = connection.prepareStatement(GET_BY_EMAIL_AND_PASSWORD_SQL)) {
             preparedStatement.setString(1, email);
             preparedStatement.setString(2, password);
 
-            var resultSet = preparedStatement.executeQuery();
+            ResultSet resultSet = preparedStatement.executeQuery();
             return resultSet.next()
                     ? Optional.of(buildEntity(resultSet))
                     : Optional.empty();
@@ -117,8 +98,8 @@ public class UserDao implements Dao<Integer, User> {
     @Override
     @SneakyThrows
     public boolean delete(Integer id) {
-        try (var connection = ConnectionManager.get();
-             var preparedStatement = connection.prepareStatement(DELETE_BY_ID_SQL)) {
+        try (Connection connection = ConnectionManager.get();
+             PreparedStatement preparedStatement = connection.prepareStatement(DELETE_BY_ID_SQL)) {
             preparedStatement.setObject(1, id);
 
             return preparedStatement.executeUpdate() > 0;
@@ -128,8 +109,8 @@ public class UserDao implements Dao<Integer, User> {
     @Override
     @SneakyThrows
     public void update(User entity) {
-        try (var connection = ConnectionManager.get();
-             var preparedStatement = connection.prepareStatement(UPDATE_BY_ID_SQL)) {
+        try (Connection connection = ConnectionManager.get();
+             PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_BY_ID_SQL)) {
             prepareStatementToUpsert(preparedStatement, entity);
             preparedStatement.setObject(7, entity.getId());
 

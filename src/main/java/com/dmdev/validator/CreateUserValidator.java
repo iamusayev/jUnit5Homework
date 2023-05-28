@@ -19,16 +19,17 @@ public class CreateUserValidator implements Validator<CreateUserDto> {
 
     @Override
     public ValidationResult validate(CreateUserDto object) {
-        var validationResult = new ValidationResult();
+        ValidationResult validationResult = new ValidationResult();
         if (!LocalDateFormatter.isValid(object.getBirthday())) {
             validationResult.add(Error.of("invalid.birthday", "Birthday is invalid"));
         }
-        if (Gender.find(object.getGender()).isEmpty()) {
+        if (!Gender.find(object.getGender()).isPresent()) {
             validationResult.add(Error.of("invalid.gender", "Gender is invalid"));
         }
-        if (Role.find(object.getRole()).isEmpty()) {
+        if (!Role.find(object.getRole()).isPresent()) {
             validationResult.add(Error.of("invalid.role", "Role is invalid"));
         }
         return validationResult;
     }
 }
+
